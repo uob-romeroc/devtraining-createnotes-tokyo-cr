@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
     <sp_widget action="INSERT_OR_UPDATE">
         <category>custom</category>
-        <client_script><![CDATA[function($rootScope,$scope) {
+        <client_script><![CDATA[function($rootScope, $scope, spUtil) {
 	/* widget controller */
 	var c = this;
 	// Use a position indicator to know which record to update
@@ -17,10 +17,11 @@
 	}
 	// Subscribe to event.  Set the new title and note values on the 
 	// c.data object
-	$rootScope.$on('updateTitle', function(event,data) { 
+	// replaced by recordWatch
+/*	$rootScope.$on('updateTitle', function(event,data) { 
 		c.data.notes[c.notePos].title = data.title;
 		c.data.notes[c.notePos].note = data.note;
-	});
+	}); */
 
 	c.newNote = function() {
 		c.server.get({
@@ -37,6 +38,12 @@
 		c.data.notes.splice(c.notePos, 1);
 	});
 
+	spUtil.recordWatch($scope, "x_snc_createnotes_note_list", "x_snc_createnotes_note_list", function(name) {
+		console.log(name.data.operation); 
+		console.log(name); 
+		
+		c.server.refresh();
+	});	
 }
 ]]></client_script>
         <controller_as>c</controller_as>
@@ -54,14 +61,15 @@
         <internal>false</internal>
         <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
         <name>Notes List</name>
-        <option_schema/>
+        <option_schema>[{"hint":"Specify a title for the Notes List widget","name":"title","section":"other","default_value":"Notes","label":"Title","type":"string"},{"hint":"Select the maximum number of records to display","name":"maximum_records_to_display","section":"other","default_value":"5","label":"Maximum records to display","type":"integer"}]</option_schema>
         <public>false</public>
         <roles/>
         <script><![CDATA[(function() {
 
 	data.notes = [];
 	var noteGR = new GlideRecord('x_snc_createnotes_note');
-	noteGR.addQuery('user', gs.getUser().getID());
+	//noteGR.addQuery('user', gs.getUser().getID());
+	noteGR.setLimit(options.maximum_records_to_display)
 	noteGR.orderByDesc('sys_created_on');
 	noteGR.query();
 	while (noteGR.next()) {
@@ -91,19 +99,21 @@
         <sys_class_name>sp_widget</sys_class_name>
         <sys_created_by>admin</sys_created_by>
         <sys_created_on>2019-05-30 18:13:04</sys_created_on>
+        <sys_customer_update>false</sys_customer_update>
         <sys_id>06948fa8db3133000613a08a4896194c</sys_id>
-        <sys_mod_count>10</sys_mod_count>
+        <sys_mod_count>16</sys_mod_count>
         <sys_name>Notes List</sys_name>
         <sys_package display_value="CreateNotes" source="x_snc_createnotes">df5fd9a5090232007f44e1046c8ff69f</sys_package>
         <sys_policy/>
+        <sys_replace_on_upgrade>false</sys_replace_on_upgrade>
         <sys_scope display_value="CreateNotes">df5fd9a5090232007f44e1046c8ff69f</sys_scope>
         <sys_update_name>sp_widget_06948fa8db3133000613a08a4896194c</sys_update_name>
-        <sys_updated_by>admin</sys_updated_by>
-        <sys_updated_on>2019-05-30 19:15:59</sys_updated_on>
+        <sys_updated_by>romeroc-admin</sys_updated_by>
+        <sys_updated_on>2023-04-28 14:16:32</sys_updated_on>
         <template><![CDATA[<div class="panel panel-default">
   <div class="panel-heading clearfix">
     <h3 class="panel-title pull-left">
-      ${Notes}
+      {{::c.options.title}}
     </h3>
     <button class="btn btn-default pull-right" ng-click="c.newNote()"> 
       <span class="glyphicon glyphicon-plus"></span> 
